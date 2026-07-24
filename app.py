@@ -4,8 +4,24 @@ import streamlit as st
 
 from data_source import load_data, load_from_upload
 
+
+def show_chart(fig):
+    """Apply consistent Inter font + white background, then render."""
+    fig.update_layout(
+        font_family="Inter, Segoe UI, sans-serif",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(t=30, b=10, l=10, r=10),
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
 MAROON = "#6A0D1F"
+MAROON_DARK = "#4A0915"
 GOLD = "#F4C542"
+GOLD_DARK = "#DAA520"
+BG_GRAY = "#F8F9FA"
 
 st.set_page_config(
     page_title="CTE Alumni Tracer Analytics",
@@ -13,17 +29,151 @@ st.set_page_config(
     layout="wide",
 )
 
+# Shared Plotly styling so every chart matches the rest of the dashboard
+px.defaults.template = "plotly_white"
+px.defaults.color_discrete_sequence = [MAROON, GOLD, "#28a745", "#17a2b8", "#dc3545", GOLD_DARK]
+
 st.markdown(
     f"""
     <style>
-    .stMetric {{
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {{
+        font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }}
+
+    .stApp {{
+        background-color: {BG_GRAY};
+    }}
+
+    /* ---- Title ---- */
+    h1 {{
+        color: {MAROON} !important;
+        font-weight: 800 !important;
+        padding-bottom: 0.6rem;
+        border-bottom: 3px solid {GOLD};
+        margin-bottom: 0.8rem !important;
+    }}
+
+    h2, h3 {{
+        color: {MAROON} !important;
+        font-weight: 700 !important;
+    }}
+
+    /* ---- Sidebar ---- */
+    section[data-testid="stSidebar"] {{
+        background: linear-gradient(180deg, {MAROON} 0%, {MAROON_DARK} 100%);
+    }}
+
+    section[data-testid="stSidebar"] * {{
+        color: {GOLD} !important;
+    }}
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {{
+        color: {GOLD} !important;
+        border: none !important;
+    }}
+
+    section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div,
+    section[data-testid="stSidebar"] .stFileUploader section,
+    section[data-testid="stSidebar"] input {{
+        background-color: rgba(244, 197, 66, 0.08) !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(244, 197, 66, 0.3) !important;
+    }}
+
+    section[data-testid="stSidebar"] .stFileUploader section {{
+        border: 1.5px dashed rgba(244, 197, 66, 0.5) !important;
+    }}
+
+    /* Multiselect selected tags */
+    section[data-testid="stSidebar"] span[data-baseweb="tag"] {{
+        background-color: {GOLD} !important;
+        color: {MAROON} !important;
+        font-weight: 600;
+    }}
+
+    /* ---- Metric cards ---- */
+    div[data-testid="stMetric"] {{
         background-color: white;
         border-radius: 12px;
-        padding: 12px;
+        padding: 14px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-bottom: 3px solid {GOLD};
     }}
+
     div[data-testid="stMetricValue"] {{
-        color: {MAROON};
+        color: {MAROON} !important;
+        font-weight: 800;
+    }}
+
+    div[data-testid="stMetricLabel"] {{
+        color: #666 !important;
+        font-weight: 500;
+    }}
+
+    /* ---- Buttons ---- */
+    .stButton > button, .stDownloadButton > button {{
+        background: linear-gradient(135deg, {MAROON} 0%, {MAROON_DARK} 100%);
+        color: {GOLD};
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.5rem 1.2rem;
+        transition: all 0.25s ease;
+    }}
+
+    .stButton > button:hover, .stDownloadButton > button:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(106, 13, 31, 0.35);
+        color: white;
+    }}
+
+    section[data-testid="stSidebar"] .stButton > button {{
+        background: {GOLD};
+        color: {MAROON} !important;
+        width: 100%;
+    }}
+
+    section[data-testid="stSidebar"] .stButton > button:hover {{
+        background: {GOLD_DARK};
+    }}
+
+    /* ---- Text input ---- */
+    .stTextInput input {{
+        border-radius: 8px !important;
+        border: 1px solid #dee2e6 !important;
+    }}
+
+    .stTextInput input:focus {{
+        border-color: {GOLD} !important;
+        box-shadow: 0 0 0 0.2rem rgba(244, 197, 66, 0.25) !important;
+    }}
+
+    /* ---- Alerts (info/warning/error/success) ---- */
+    div[data-testid="stAlert"] {{
+        border-radius: 10px;
+    }}
+
+    /* ---- Dataframe / table container ---- */
+    div[data-testid="stDataFrame"] {{
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }}
+
+    /* ---- Chart containers ---- */
+    div[data-testid="stPlotlyChart"] {{
+        background-color: white;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }}
+
+    hr {{
+        border-top: 1px solid rgba(106, 13, 31, 0.15);
     }}
     </style>
     """,
@@ -131,7 +281,7 @@ with col1:
     fig = px.pie(emp_df, names="Status", values="Count", hole=0.5,
                  color="Status",
                  color_discrete_map={"Employed": "#28a745", "Unemployed": "#dc3545", "Further Studies": "#17a2b8"})
-    st.plotly_chart(fig, use_container_width=True)
+    show_chart(fig)
 
 with col2:
     st.subheader("Program Distribution")
@@ -140,7 +290,7 @@ with col2:
     fig = px.bar(course_counts, x="Graduates", y="Program", orientation="h",
                  color_discrete_sequence=[GOLD])
     fig.update_layout(yaxis={"categoryorder": "total ascending"})
-    st.plotly_chart(fig, use_container_width=True)
+    show_chart(fig)
 
 # ---------- Trends over years ----------
 st.subheader("Employment Trends by Graduation Year")
@@ -155,7 +305,7 @@ trend_long = trend.melt(id_vars="year_graduated", var_name="Status", value_name=
 fig = px.line(trend_long, x="year_graduated", y="Count", color="Status", markers=True,
               color_discrete_map={"Employed": "#28a745", "Unemployed": "#dc3545", "Further Studies": "#17a2b8"})
 fig.update_xaxes(title="Year Graduated", dtick=1)
-st.plotly_chart(fig, use_container_width=True)
+show_chart(fig)
 
 # ---------- Charts row 2 ----------
 col3, col4, col5 = st.columns(3)
@@ -167,7 +317,7 @@ with col3:
         sat_counts = filtered["satisfaction"].value_counts().reindex(order).dropna().reset_index()
         sat_counts.columns = ["Satisfaction", "Count"]
         fig = px.bar(sat_counts, x="Satisfaction", y="Count", color_discrete_sequence=[MAROON])
-        st.plotly_chart(fig, use_container_width=True)
+        show_chart(fig)
 
 with col4:
     if "job_relevance" in filtered.columns and filtered["job_relevance"].notna().any():
@@ -176,7 +326,7 @@ with col4:
         rel_counts.columns = ["Relevance", "Count"]
         fig = px.pie(rel_counts, names="Relevance", values="Count", hole=0.4,
                      color_discrete_sequence=["#28a745", GOLD, "#dc3545"])
-        st.plotly_chart(fig, use_container_width=True)
+        show_chart(fig)
 
 with col5:
     if "employment_sector" in filtered.columns:
@@ -187,7 +337,7 @@ with col5:
             sc = sector_counts.value_counts().reset_index()
             sc.columns = ["Sector", "Count"]
             fig = px.pie(sc, names="Sector", values="Count", hole=0.4)
-            st.plotly_chart(fig, use_container_width=True)
+            show_chart(fig)
 
 st.divider()
 
@@ -199,7 +349,7 @@ with col6:
     g = filtered["gender"].value_counts().reset_index()
     g.columns = ["Gender", "Count"]
     fig = px.pie(g, names="Gender", values="Count", hole=0.4)
-    st.plotly_chart(fig, use_container_width=True)
+    show_chart(fig)
 
 with col7:
     if "employment_location" in filtered.columns and filtered["employment_location"].notna().any():
@@ -208,7 +358,7 @@ with col7:
         loc.columns = ["Location", "Count"]
         fig = px.pie(loc, names="Location", values="Count", hole=0.4,
                      color_discrete_sequence=[MAROON, GOLD, "#28a745"])
-        st.plotly_chart(fig, use_container_width=True)
+        show_chart(fig)
 
 st.divider()
 
