@@ -24,16 +24,52 @@ import streamlit as st
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
-    df["years_employed"] = pd.to_numeric(df.get("years_employed"), errors="coerce")
-    df["year_graduated"] = pd.to_numeric(df.get("year_graduated"), errors="coerce").astype("Int64")
+    if "years_employed" in df.columns:
+        df["years_employed"] = pd.to_numeric(df["years_employed"], errors="coerce")
+    if "year_graduated" in df.columns:
+        df["year_graduated"] = pd.to_numeric(df["year_graduated"], errors="coerce").astype("Int64")
     if "created_at" in df.columns:
         df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
     return df
 
 
 def load_from_upload(uploaded_file) -> pd.DataFrame:
-    """Load data from a CSV file the user drags into the app."""
-    df = pd.read_csv(uploaded_file)
+    """Load data from the CSV exported by the site's existing export feature."""
+    df = pd.read_csv(uploaded_file, encoding="utf-8-sig")
+
+    rename_map = {
+        "Full Name": "graduate_name",
+        "Gender": "gender",
+        "Course/Program": "course",
+        "Year Graduated": "year_graduated",
+        "Employment Status": "employment_status",
+        "Job Title/Position": "job_title",
+        "Company/Organization": "company",
+        "Employment Sector": "employment_sector",
+        "Employment Type": "employment_type",
+        "Employment Location": "employment_location",
+        "Years of Employment": "years_employed",
+        "Job Relevance": "job_relevance",
+        "Further Studies": "further_studies",
+        "Further Studies Status": "further_studies_status",
+        "Studies Program": "studies_program",
+        "Studies School": "studies_school",
+        "Satisfaction": "satisfaction",
+        "Date Submitted": "created_at",
+    }
+    df = df.rename(columns=rename_map)
+
+    # Drop personally-identifying / contact columns that aren't needed for
+    # aggregate analytics (address, personal email, phone number, etc).
+    drop_cols = [
+        "Student ID", "User Name", "User Email", "Address", "Contact Email",
+        "Contact Number", "Looking for Job", "Unemployment Reason",
+        "Subjects Relevance", "Useful Skills", "Studies Level",
+        "Program Strengths", "Areas for Improvement", "Advice/Suggestions",
+        "Additional Comments", "Employment Date", "Last Updated",
+    ]
+    df = df.drop(columns=[c for c in drop_cols if c in df.columns])
+
     return _normalize(df)
 
 
