@@ -65,34 +65,61 @@ st.markdown(
         background: linear-gradient(180deg, {MAROON} 0%, {MAROON_DARK} 100%);
     }}
 
-    section[data-testid="stSidebar"] * {{
+    /* Default: text sits directly on the dark maroon background -> gold */
+    section[data-testid="stSidebar"] {{
+        color: {GOLD} !important;
+    }}
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] .stMarkdown {{
         color: {GOLD} !important;
     }}
 
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {{
-        color: {GOLD} !important;
         border: none !important;
     }}
 
+    /* Filter boxes (multiselect / file uploader / text input) have a LIGHT
+       background, so their own text needs to be dark for contrast - this
+       overrides the gold-everywhere rule above specifically inside them. */
     section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div,
     section[data-testid="stSidebar"] .stFileUploader section,
     section[data-testid="stSidebar"] input {{
-        background-color: rgba(244, 197, 66, 0.08) !important;
+        background-color: rgba(244, 197, 66, 0.12) !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(244, 197, 66, 0.3) !important;
+        border: 1px solid rgba(244, 197, 66, 0.35) !important;
+    }}
+
+    section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div,
+    section[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] * ,
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] .stFileUploader section,
+    section[data-testid="stSidebar"] .stFileUploader section * {{
+        color: {MAROON_DARK} !important;
     }}
 
     section[data-testid="stSidebar"] .stFileUploader section {{
-        border: 1.5px dashed rgba(244, 197, 66, 0.5) !important;
+        border: 1.5px dashed rgba(244, 197, 66, 0.6) !important;
+        background-color: rgba(255, 255, 255, 0.9) !important;
     }}
 
-    /* Multiselect selected tags */
+    /* Multiselect selected tags: gold background -> maroon text, including
+       the label span and the little "x" remove icon inside it */
     section[data-testid="stSidebar"] span[data-baseweb="tag"] {{
         background-color: {GOLD} !important;
         color: {MAROON} !important;
         font-weight: 600;
+    }}
+
+    section[data-testid="stSidebar"] span[data-baseweb="tag"] * {{
+        color: {MAROON} !important;
+        fill: {MAROON} !important;
     }}
 
     /* ---- Metric cards ---- */
