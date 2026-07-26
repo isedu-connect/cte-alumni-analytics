@@ -21,7 +21,7 @@ MAROON = "#6A0D1F"
 MAROON_DARK = "#4A0915"
 GOLD = "#F4C542"
 GOLD_DARK = "#DAA520"
-BG_GRAY = "#F8F9FA"
+BG_GRAY = "#F1EEEA"
 
 st.set_page_config(
     page_title="CTE Alumni Tracer Analytics",
